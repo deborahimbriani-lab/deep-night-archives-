@@ -1,6 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
+
+// Caricamento asincrono di Three.js per evitare errori server-side
+const RoomCanvas = dynamic(() => import('../components/RoomCanvas'), {
+  ssr: false,
+});
 
 export default function Home() {
   const [signalLocked, setSignalLocked] = useState(false);
@@ -18,7 +24,8 @@ export default function Home() {
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: '#000000',
-      position: 'relative'
+      position: 'relative',
+      overflow: 'hidden'
     }}>
       {!signalLocked ? (
         <button
@@ -32,15 +39,14 @@ export default function Home() {
             fontFamily: 'monospace',
             letterSpacing: '0.25em',
             cursor: 'pointer',
-            boxShadow: '0 0 15px rgba(139, 0, 0, 0.4)'
+            boxShadow: '0 0 15px rgba(139, 0, 0, 0.4)',
+            zIndex: 10
           }}
         >
           [ ▶ ENTER SIGNAL ]
         </button>
       ) : (
-        <div style={{ color: '#FF1E1E', letterSpacing: '0.2em' }}>
-          INITIALIZING WEBGL VIEWPORT...
-        </div>
+        <RoomCanvas />
       )}
     </main>
   );
