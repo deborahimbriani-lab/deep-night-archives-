@@ -4,19 +4,16 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function CinemaViewport() {
-  const [activeItem, setActiveItem] = useState(null); // 'tv', 'tapes', null
+  const [activeItem, setActiveItem] = useState(null);
   const [shares, setShares] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState(false);
 
-  // Recupera il contatore salvato sul telefono alla riapertura
   useEffect(() => {
     const saved = localStorage.getItem('dna_sigil_shares');
-    if (saved) {
-      setShares(parseInt(saved, 10));
-    }
+    if (saved) setShares(parseInt(saved, 10));
   }, []);
 
-  // Audio diegetico: click meccanico a nastro
   const playClick = (freq = 80) => {
     try {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -34,30 +31,53 @@ export default function CinemaViewport() {
     } catch (e) {}
   };
 
-  // Condivisione reale: incrementa SOLO se l'utente invia effettivamente il messaggio
-  const handleShare = async () => {
-    playClick(140);
+  const currentUrl = typeof window !== 'undefined' ? window.location.origin : 'https://deep-night-archives.vercel.app';
+  const rawText = "⚠️ SEGNALE INTERCETTATO // DEEP NIGHT ARCHIVES\nGuarda il nastro prima che venga rimosso:\n" + currentUrl;
+  const encodedTextOnly = encodeURIComponent("⚠️ SEGNALE INTERCETTATO // DEEP NIGHT ARCHIVES - Guarda il nastro prima che venga rimosso:");
+  const encodedUrlOnly = encodeURIComponent(currentUrl);
+  const encodedFullMessage = encodeURIComponent(rawText);
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'DEEP NIGHT ARCHIVES',
-          text: 'The entity is unlocked. Watch the signal before it disappears.',
-          url: window.location.href,
-        });
+  // Canali Privati: +1 per invio
+  const handlePrivateShare = (url) => {
+    playClick(110);
+    window.open(url, '_blank');
+    setShares((prev) => {
+      const updated = Math.min(prev + 1, 3);
+      localStorage.setItem('dna_sigil_shares', updated);
+      return updated;
+    });
+  };
 
-        // Questo codice scatta SOLO se il messaggio è stato inviato con successo
-        setShares((prev) => {
-          const updated = Math.min(prev + 1, 3);
-          localStorage.setItem('dna_sigil_shares', updated);
-          return updated;
-        });
-      } catch (err) {
-        // Se l'utente chiude il menu senza inviare, il contatore non sale
-      }
-    } else {
-      navigator.clipboard?.writeText(window.location.href);
-      alert('SIGNAL LINK COPIED TO CLIPBOARD');
+  // Social Broadcast (X): Sblocco Totale 3/3
+  const handleTwitterShare = () => {
+    playClick(150);
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodedTextOnly}&url=${encodedUrlOnly}`;
+    window.open(twitterUrl, '_blank');
+    setShares(3);
+    localStorage.setItem('dna_sigil_shares', 3);
+  };
+
+  // YouTube Community Post: Sblocco Totale 3/3
+  const handleYouTubeShare = () => {
+    playClick(160);
+    if (typeof window !== 'undefined') {
+      navigator.clipboard?.writeText(rawText);
+    }
+    const youtubeUrl = `https://www.youtube.com/post_entry`;
+    window.open(youtubeUrl, '_blank');
+    setShares(3);
+    localStorage.setItem('dna_sigil_shares', 3);
+  };
+
+  // Copia Testo + Link per TikTok/Instagram Storie: Sblocco Totale 3/3
+  const handleCopyFullSignal = () => {
+    playClick(150);
+    if (typeof window !== 'undefined') {
+      navigator.clipboard?.writeText(rawText);
+      setCopyFeedback(true);
+      setShares(3);
+      localStorage.setItem('dna_sigil_shares', 3);
+      setTimeout(() => setCopyFeedback(false), 2500);
     }
   };
 
@@ -78,7 +98,6 @@ export default function CinemaViewport() {
       padding: '24px 16px',
       boxSizing: 'border-box'
     }}>
-      {/* Scanline CRT globali */}
       <div style={{
         position: 'absolute',
         inset: 0,
@@ -99,12 +118,12 @@ export default function CinemaViewport() {
         <span style={{ color: '#8B0000', fontSize: '0.75rem', letterSpacing: '0.2em' }}>
           ARCHIVE ROOM // TAPE DECK
         </span>
-        <span style={{ color: '#444', fontSize: '0.7rem' }}>
+        <span style={{ color: shares >= 3 ? '#25D366' : '#666', fontSize: '0.7rem' }}>
           SIGIL: {shares}/3 UNLOCKED
         </span>
       </div>
 
-      {/* MONITOR CRT AL CENTRO */}
+      {/* MONITOR CRT */}
       <div
         style={{
           position: 'relative',
@@ -148,7 +167,7 @@ export default function CinemaViewport() {
         </span>
       </div>
 
-      {/* ZONA TAVOLO & INTERAZIONI FISICHE */}
+      {/* RASTRELLIERA E DOSSIER */}
       <div style={{
         display: 'flex',
         flexDirection: 'column',
@@ -158,7 +177,6 @@ export default function CinemaViewport() {
         margin: '0 auto',
         zIndex: 2
       }}>
-        {/* RASTRELLIERA CASSETTE VHS */}
         <div style={{
           backgroundColor: '#0c0a0a',
           border: '1px solid #221a1a',
@@ -189,7 +207,6 @@ export default function CinemaViewport() {
           </button>
         </div>
 
-        {/* IL DOSSIER FORENSE SUL TAVOLO */}
         <Link
           href="/dossier"
           onClick={() => playClick(60)}
@@ -218,52 +235,144 @@ export default function CinemaViewport() {
         </Link>
       </div>
 
-      {/* POPUP SBLOCCO VIRALE (CATENA CONDIVISIONI) */}
+      {/* POPUP CONDIVISIONE */}
       {showShareModal && (
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.92)',
+          backgroundColor: 'rgba(0,0,0,0.95)',
           zIndex: 50,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '24px',
+          padding: '20px',
           textAlign: 'center'
         }}>
           <div style={{
             border: '1px solid #8B0000',
-            padding: '24px',
-            maxWidth: '360px',
+            padding: '24px 18px',
+            maxWidth: '380px',
             width: '100%',
-            backgroundColor: '#0a0505'
+            backgroundColor: '#0a0505',
+            boxSizing: 'border-box'
           }}>
-            <div style={{ color: '#FF1E1E', fontSize: '1.1rem', marginBottom: '8px' }}>
-              BREAK THE SIGNAL CURSE
+            <div style={{ color: '#FF1E1E', fontSize: '1rem', letterSpacing: '0.15em', marginBottom: '6px' }}>
+              BREAK THE CURSE // TRANSMISSION
             </div>
-            <p style={{ color: '#888', fontSize: '0.8rem', lineHeight: '1.5' }}>
-              Transmit the frequency to 3 victims to unlock CASE 02 and classified records.
+            <p style={{ color: '#777', fontSize: '0.75rem', lineHeight: '1.4', margin: '0 0 16px 0' }}>
+              Invia a 3 persone in privato (+1 per contatto) o trasmetti pubblicamente per sbloccare l&apos;intero archivio.
             </p>
-            <div style={{ margin: '20px 0', fontSize: '1.5rem', color: '#fff' }}>
-              [ {shares} / 3 ]
+
+            <div style={{
+              fontSize: '1.6rem',
+              color: shares >= 3 ? '#25D366' : '#fff',
+              margin: '10px 0 18px 0',
+              letterSpacing: '0.2em'
+            }}>
+              [ {shares} / 3 ] {shares >= 3 && '✓'}
             </div>
-            <button
-              onClick={handleShare}
-              style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#8B0000',
-                border: 'none',
-                color: '#fff',
-                fontFamily: 'monospace',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                marginBottom: '10px'
-              }}
-            >
-              TRANSMIT SIGNAL
-            </button>
+
+            {/* PRIVATI (+1) */}
+            <div style={{ textAlign: 'left', marginBottom: '14px' }}>
+              <span style={{ color: '#8B0000', fontSize: '0.65rem', letterSpacing: '0.1em' }}>
+                INVIO PRIVATO (+1 OGNUNO)
+              </span>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <button
+                  onClick={() => handlePrivateShare(`https://api.whatsapp.com/send?text=${encodedFullMessage}`)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 6px',
+                    backgroundColor: '#111',
+                    border: '1px solid #25D366',
+                    color: '#25D366',
+                    fontFamily: 'monospace',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  WHATSAPP
+                </button>
+                <button
+                  onClick={() => handlePrivateShare(`https://t.me/share/url?url=${encodedUrlOnly}&text=${encodedTextOnly}`)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 6px',
+                    backgroundColor: '#111',
+                    border: '1px solid #2AABEE',
+                    color: '#2AABEE',
+                    fontFamily: 'monospace',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  TELEGRAM
+                </button>
+              </div>
+            </div>
+
+            {/* SOCIAL (SBLOCCO TOTALE 3/3) */}
+            <div style={{ textAlign: 'left', marginBottom: '18px' }}>
+              <span style={{ color: '#8B0000', fontSize: '0.65rem', letterSpacing: '0.1em' }}>
+                PUBBLICAZIONE BROADCAST (SBLOCCO IMMEDIATO 3/3)
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                {/* YOUTUBE COMMUNITY */}
+                <button
+                  onClick={handleYouTubeShare}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#1a0505',
+                    border: '1px solid #FF0000',
+                    color: '#FF0000',
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold',
+                    fontSize: '0.78rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  POST SU YOUTUBE (COMMUNITY)
+                </button>
+
+                {/* X / TWITTER */}
+                <button
+                  onClick={handleTwitterShare}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#8B0000',
+                    border: 'none',
+                    color: '#fff',
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold',
+                    fontSize: '0.78rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  POST SU X / TWITTER
+                </button>
+
+                {/* COPIA LINK / STORIE */}
+                <button
+                  onClick={handleCopyFullSignal}
+                  style={{
+                    width: '100%',
+                    padding: '9px',
+                    backgroundColor: '#141414',
+                    border: '1px dashed #666',
+                    color: copyFeedback ? '#25D366' : '#bbb',
+                    fontFamily: 'monospace',
+                    fontSize: '0.7rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {copyFeedback ? '✓ TESTO + LINK COPIATI!' : 'COPIA SEGNALE (TIKTOK / IG STORIES)'}
+                </button>
+              </div>
+            </div>
+
             <button
               onClick={() => setShowShareModal(false)}
               style={{
@@ -275,13 +384,13 @@ export default function CinemaViewport() {
                 cursor: 'pointer'
               }}
             >
-              [ CLOSE ]
+              [ CHIUDI ARCHIVIO ]
             </button>
           </div>
         </div>
       )}
 
-      {/* SCHERMATA PLAYER VIDEO NASTRO ATTIVO */}
+      {/* MODALE STREAMING CASSETTA ATTIVA */}
       {activeItem === 'tv' && (
         <div style={{
           position: 'fixed',
