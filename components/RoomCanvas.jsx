@@ -14,57 +14,110 @@ export default function RoomCanvas() {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
-    // CINEPRESA (Arretriamo a 5 metri per vedere l'intero televisore)
+    // CINEPRESA (Inquadratura cinematografica: leggermente dall'alto e inclinata)
     const camera = new THREE.PerspectiveCamera(
       45,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000
+      100
     );
-    camera.position.set(0, 0, 5.2);
+    camera.position.set(0, 0.4, 3.8);
+    camera.lookAt(0, -0.1, 0);
 
     // RENDERER
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
 
-    // LUCI (Chiaroscuro horror d'atmosfera)
-    const redLight = new THREE.PointLight(0x8B0000, 3, 15);
-    redLight.position.set(0, 2, 2);
-    scene.add(redLight);
-
-    const ambientLight = new THREE.AmbientLight(0x1a1a1a);
+    // LUCI: Chiaroscuro horror drammatico
+    const ambientLight = new THREE.AmbientLight(0x080808);
     scene.add(ambientLight);
 
-    // TELAIO ESTERNO TV CRT (Plastica opaca pesante)
-    const bodyGeo = new THREE.BoxGeometry(2.4, 1.8, 1.2);
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0x151515,
-      roughness: 0.85,
-      metalness: 0.1
+    const ceilingSpot = new THREE.SpotLight(0x8B0000, 4, 10, Math.PI / 4, 0.5);
+    ceilingSpot.position.set(0, 3, 1.5);
+    ceilingSpot.target.position.set(0, -0.2, 0);
+    scene.add(ceilingSpot);
+    scene.add(ceilingSpot.target);
+
+    const edgeRimLight = new THREE.PointLight(0x1a2233, 1.5, 6);
+    edgeRimLight.position.set(-2, 1, -1);
+    scene.add(edgeRimLight);
+
+    // GRUPPO GENERALE STANZA / APPARECCHIATURE
+    const roomGroup = new THREE.Group();
+    scene.add(roomGroup);
+
+    // TAVOLO IN LEGNO SCURO (Superficie orizzontale)
+    const tableGeo = new THREE.BoxGeometry(4.5, 0.15, 3);
+    const tableMat = new THREE.MeshStandardMaterial({
+      color: 0x120d0a,
+      roughness: 0.95,
+      metalness: 0.05
     });
-    const tvBody = new THREE.Mesh(bodyGeo, bodyMat);
-    scene.add(tvBody);
+    const table = new THREE.Mesh(tableGeo, tableMat);
+    table.position.set(0, -0.85, 0);
+    roomGroup.add(table);
 
-    // VETRO BOMBATO DEL MONITOR (Canvas dinamico con rumore statico e scanline)
-    const noiseCanvas = document.createElement('canvas');
-    noiseCanvas.width = 256;
-    noiseCanvas.height = 256;
-    const ctx = noiseCanvas.getContext('2d');
-    const screenTexture = new THREE.CanvasTexture(noiseCanvas);
+    // CORPO PRINCIPALE TV CRT (Chassis sagomato anni '80)
+    const tvGroup = new THREE.Group();
+    tvGroup.position.set(0, -0.05, 0);
+    roomGroup.add(tvGroup);
 
-    // VETRO CURVO
-    const screenGeo = new THREE.CylinderGeometry(1.6, 1.6, 1.3, 32, 1, false, -0.4, 0.8);
+    const chassisGeo = new THREE.BoxGeometry(1.9, 1.4, 1.1);
+    const chassisMat = new THREE.MeshStandardMaterial({
+      color: 0x181818,
+      roughness: 0.8,
+      metalness: 0.2
+    });
+    const chassis = new THREE.Mesh(chassisGeo, chassisMat);
+    tvGroup.add(chassis);
+
+    // CORNICE DELLO SCHERMO
+    const bezelGeo = new THREE.BoxGeometry(1.4, 1.15, 0.05);
+    const bezelMat = new THREE.MeshStandardMaterial({
+      color: 0x0a0a0a,
+      roughness: 0.9
+    });
+    const bezel = new THREE.Mesh(bezelGeo, bezelMat);
+    bezel.position.set(-0.15, 0, 0.56);
+    tvGroup.add(bezel);
+
+    // PANNELLO LATERALE COMANDI / MANOPOLE ANALOGICHE
+    const knobGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.05, 16);
+    const knobMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, metalness: 0.6 });
+    
+    const knob1 = new THREE.Mesh(knobGeo, knobMat);
+    knob1.rotation.x = Math.PI / 2;
+    knob1.position.set(0.72, 0.25, 0.57);
+    tvGroup.add(knob1);
+
+    const knob2 = knob1.clone();
+    knob2.position.set(0.72, 0.05, 0.57);
+    tvGroup.add(knob2);
+
+    // VETRO BOMBATO CRT CON SEGNALE E TASTO DIEGETICO
+    const crtCanvas = document.createElement('canvas');
+    crtCanvas.width = 512;
+    crtCanvas.height = 512;
+    const ctx = crtCanvas.getContext('2d');
+    const crtTexture = new THREE.CanvasTexture(crtCanvas);
+
+    const screenGeo = new THREE.PlaneGeometry(1.3, 1.05);
     const screenMat = new THREE.MeshBasicMaterial({
-      map: screenTexture,
+      map: crtTexture
     });
-    const tvScreen = new THREE.Mesh(screenGeo, screenMat);
-    tvScreen.rotation.y = Math.PI;
-    tvScreen.position.z = 0.55;
-    scene.add(tvScreen);
+    const screen = new THREE.Mesh(screenGeo, screenMat);
+    screen.position.set(-0.15, 0, 0.59);
+    tvGroup.add(screen);
 
-    // RESIZE
+    // LUCE EMESSA DALLO SCHERMO
+    const screenGlow = new THREE.PointLight(0x3a0d0d, 1.2, 2.5);
+    screenGlow.position.set(-0.15, 0, 0.9);
+    tvGroup.add(screenGlow);
+
+    // GESTIONE RESIZE
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -72,24 +125,51 @@ export default function RoomCanvas() {
     };
     window.addEventListener('resize', handleResize);
 
-    // LOOP: Generazione statica analogica + flicker
+    // RENDERING LOOP (Disegno scanline, rumore analogico e tasto Play pulsante)
     let animId;
-    const animate = () => {
-      // Rumore bianco da canale non sintonizzato
-      const imgData = ctx.createImageData(256, 256);
-      const buffer = new Uint32Array(imgData.data.buffer);
-      for (let i = 0; i < buffer.length; i++) {
-        // Interlacciamento a bande orizzontali + rumore scuro
-        const row = (i / 256) | 0;
-        const scanlineDarkness = (row % 3 === 0) ? 0.4 : 1.0;
-        const gray = ((Math.random() * 90) * scanlineDarkness) | 0;
-        buffer[i] = (255 << 24) | (gray << 16) | (gray << 8) | gray;
-      }
-      ctx.putImageData(imgData, 0, 0);
-      screenTexture.needsUpdate = true;
+    let pulse = 0;
 
-      // Sfarfallio della luce d'ambiente
-      redLight.intensity = Math.random() > 0.9 ? 1.2 : 2.8;
+    const animate = () => {
+      pulse += 0.05;
+
+      // Disegna il quadro del CRT
+      ctx.fillStyle = '#060202';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Righe di scansione interlacciate
+      for (let y = 0; y < 512; y += 4) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillRect(0, y, 512, 2);
+      }
+
+      // Rumore analogico sparso
+      for (let i = 0; i < 400; i++) {
+        const rx = Math.random() * 512;
+        const ry = Math.random() * 512;
+        ctx.fillStyle = 'rgba(160, 20, 20, 0.15)';
+        ctx.fillRect(rx, ry, 2, 2);
+      }
+
+      // Tasto diegetico [ ▶ ] pulsante
+      const glowAlpha = 0.5 + Math.sin(pulse) * 0.35;
+      ctx.strokeStyle = `rgba(255, 30, 30, ${glowAlpha})`;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(176, 216, 160, 80);
+
+      ctx.fillStyle = `rgba(255, 50, 50, ${glowAlpha})`;
+      ctx.font = 'bold 36px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('[ ▶ ]', 256, 256);
+
+      ctx.font = '14px monospace';
+      ctx.fillStyle = 'rgba(150, 150, 150, 0.7)';
+      ctx.fillText('SIGNAL: LOCKED', 256, 320);
+
+      crtTexture.needsUpdate = true;
+
+      // Sfarfallio organico della luce horror
+      ceilingSpot.intensity = Math.random() > 0.92 ? 1.5 : 4.2;
 
       renderer.render(scene, camera);
       animId = requestAnimationFrame(animate);
@@ -114,7 +194,8 @@ export default function RoomCanvas() {
         inset: 0,
         width: '100vw',
         height: '100dvh',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        backgroundColor: '#000000'
       }}
     />
   );
