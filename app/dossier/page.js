@@ -20,7 +20,6 @@ export default function DossierPage() {
           </h1>
         </div>
 
-        {/* Box Predisposizione Google AdSense (Conforme AdSense) */}
         <div style={{
           border: '1px dashed #333333',
           padding: '16px',
@@ -33,7 +32,7 @@ export default function DossierPage() {
         </div>
 
         <article style={{ lineHeight: '1.7', fontSize: '0.9rem', color: '#a0a0a0' }}>
-          <p>> REPERTO AUTOPTICO #409-B</p>
+          <p>&gt; REPERTO AUTOPTICO #409-B</p>
           <p>
             Trascrizione dattiloscritta del primo rilievo sulla scena.
             Alterazioni volumetriche e degradazione del segnale analogico documentate.
