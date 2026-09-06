@@ -36,7 +36,7 @@ export default function CinemaViewport() {
   const textOnly = encodeURIComponent("⚠️ SEGNALE INTERCETTATO // DEEP NIGHT ARCHIVES");
   const urlOnly = encodeURIComponent(currentUrl);
 
-  // Azione Privata: apre via HTTPS Universal Link e avanza il contatore (+1)
+  // Azione Privata: apre via link universale e sale di +1
   const triggerPrivateShare = (url) => {
     playClick(100);
     window.open(url, '_blank');
@@ -47,7 +47,7 @@ export default function CinemaViewport() {
     }
   };
 
-  // Azione Broadcast: apre il canale e porta istantaneamente a 3/3
+  // Azione Broadcast: apre il canale e sblocca istantaneamente (3/3)
   const triggerBroadcastShare = (url) => {
     playClick(160);
     window.open(url, '_blank');
@@ -55,7 +55,7 @@ export default function CinemaViewport() {
     localStorage.setItem('dna_sigil_shares', 3);
   };
 
-  // Copia link per TikTok/Instagram
+  // Copia link per TikTok / Storie Instagram
   const triggerCopy = () => {
     playClick(120);
     navigator.clipboard?.writeText("⚠️ SEGNALE INTERCETTATO // DEEP NIGHT ARCHIVES: " + currentUrl);
@@ -63,6 +63,14 @@ export default function CinemaViewport() {
     setShares(3);
     localStorage.setItem('dna_sigil_shares', 3);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  // Reset diagnostico per rimettere il contatore a zero
+  const resetProgress = () => {
+    playClick(40);
+    localStorage.removeItem('dna_sigil_shares');
+    setShares(0);
+    setShowShareModal(false);
   };
 
   return (
@@ -82,7 +90,7 @@ export default function CinemaViewport() {
       padding: '24px 16px',
       boxSizing: 'border-box'
     }}>
-      {/* Texture scanline analogiche */}
+      {/* Texture scanline CRT */}
       <div style={{
         position: 'absolute',
         inset: 0,
@@ -222,6 +230,24 @@ export default function CinemaViewport() {
         </Link>
       </div>
 
+      {/* TASTO RESET DIAGNOSTICO */}
+      <div style={{ textAlign: 'center', zIndex: 2 }}>
+        <button
+          onClick={resetProgress}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#331111',
+            fontSize: '0.65rem',
+            letterSpacing: '0.15em',
+            cursor: 'pointer',
+            padding: '6px'
+          }}
+        >
+          [ RESET CURSE DATA ]
+        </button>
+      </div>
+
       {/* POPUP CONDIVISIONE / SBLOCCO CON ICONE UFFICIALI */}
       {showShareModal && (
         <div style={{
@@ -253,9 +279,23 @@ export default function CinemaViewport() {
                 <div style={{ color: '#25D366', fontSize: '1.2rem', marginBottom: '8px' }}>
                   ✓ SIGILLO SPEZZATO
                 </div>
-                <p style={{ color: '#999', fontSize: '0.8rem' }}>
+                <p style={{ color: '#999', fontSize: '0.8rem', marginBottom: '20px' }}>
                   CASE 02 è stato sbloccato nell&apos;archivio VHS.
                 </p>
+                <button
+                  onClick={resetProgress}
+                  style={{
+                    background: '#1a0808',
+                    border: '1px solid #8B0000',
+                    color: '#ff6666',
+                    padding: '8px 16px',
+                    fontFamily: 'monospace',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  BLOCCA DI NUOVO (TEST)
+                </button>
               </div>
             ) : (
               <>
