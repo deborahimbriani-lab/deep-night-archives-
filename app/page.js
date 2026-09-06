@@ -1,12 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function CinemaViewport() {
   const [activeItem, setActiveItem] = useState(null); // 'tv', 'tapes', null
   const [shares, setShares] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Recupera il contatore salvato sul telefono alla riapertura
+  useEffect(() => {
+    const saved = localStorage.getItem('dna_sigil_shares');
+    if (saved) {
+      setShares(parseInt(saved, 10));
+    }
+  }, []);
 
   // Audio diegetico: click meccanico a nastro
   const playClick = (freq = 80) => {
@@ -26,16 +34,30 @@ export default function CinemaViewport() {
     } catch (e) {}
   };
 
-  const handleShare = () => {
+  // Condivisione reale: incrementa SOLO se l'utente invia effettivamente il messaggio
+  const handleShare = async () => {
     playClick(140);
-    const newShares = Math.min(shares + 1, 3);
-    setShares(newShares);
+
     if (navigator.share) {
-      navigator.share({
-        title: 'DEEP NIGHT ARCHIVES',
-        text: 'The entity is unlocked. Watch the signal before it disappears.',
-        url: window.location.href,
-      }).catch(() => {});
+      try {
+        await navigator.share({
+          title: 'DEEP NIGHT ARCHIVES',
+          text: 'The entity is unlocked. Watch the signal before it disappears.',
+          url: window.location.href,
+        });
+
+        // Questo codice scatta SOLO se il messaggio è stato inviato con successo
+        setShares((prev) => {
+          const updated = Math.min(prev + 1, 3);
+          localStorage.setItem('dna_sigil_shares', updated);
+          return updated;
+        });
+      } catch (err) {
+        // Se l'utente chiude il menu senza inviare, il contatore non sale
+      }
+    } else {
+      navigator.clipboard?.writeText(window.location.href);
+      alert('SIGNAL LINK COPIED TO CLIPBOARD');
     }
   };
 
@@ -83,23 +105,24 @@ export default function CinemaViewport() {
       </div>
 
       {/* MONITOR CRT AL CENTRO */}
-      <div style={{
-        position: 'relative',
-        width: '100%',
-        maxWidth: '420px',
-        margin: '0 auto',
-        aspectRatio: '4/3',
-        backgroundColor: '#0a0808',
-        borderRadius: '28px',
-        border: '10px solid #141111',
-        boxShadow: 'inset 0 0 50px #000, 0 15px 50px rgba(0,0,0,0.95), 0 0 30px rgba(139,0,0,0.15)',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        cursor: 'pointer'
-      }}
-      onClick={() => { playClick(90); setActiveItem('tv'); }}
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '420px',
+          margin: '0 auto',
+          aspectRatio: '4/3',
+          backgroundColor: '#0a0808',
+          borderRadius: '28px',
+          border: '10px solid #141111',
+          boxShadow: 'inset 0 0 50px #000, 0 15px 50px rgba(0,0,0,0.95), 0 0 30px rgba(139,0,0,0.15)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          cursor: 'pointer'
+        }}
+        onClick={() => { playClick(90); setActiveItem('tv'); }}
       >
         <div style={{
           position: 'absolute',
@@ -135,7 +158,7 @@ export default function CinemaViewport() {
         margin: '0 auto',
         zIndex: 2
       }}>
-        {/* RASTRELLIERA CASSETTE VHS (I TUOI PROSSIMI FILM) */}
+        {/* RASTRELLIERA CASSETTE VHS */}
         <div style={{
           backgroundColor: '#0c0a0a',
           border: '1px solid #221a1a',
